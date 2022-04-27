@@ -1,150 +1,104 @@
-import React, { useState, useEffect } from "react";
-import { Redirect } from "react-router-dom";
-import "./App.css";
-import { Input, Button } from "antd";
+import React, {useState} from 'react';
+import './App.css';
+import {Input,Button} from 'antd';
+import {Link, Redirect} from 'react-router-dom'
 
-function ScreenHome(props) {
-  const [signUpUserName, setSignUpUserName] = useState("");
-  const [signUpEmail, setSignUpEmail] = useState("");
-  const [signUpPassword, setSignUpPassword] = useState("");
-  const [signInEmail, setSignInEmail] = useState("");
-  const [signInPassword, setSignInPassword] = useState("");
-  const [isLogin, setIsLogin] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [errorMessageSignin, setErrorMessageSignin] = useState("");
+function ScreenHome() {
 
-  const handleSubmitSignUp = (props) => {
-    const signUpDataBase = async () => {
-      let rawResponse = await fetch("/sign-up", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `usernameFromFront=${signUpUserName}&emailFromFront=${signUpEmail}&passwordFromFront=${signUpPassword}`,
-      });
-      let response = await rawResponse.json();
+  const [signUpUsername, setSignUpUsername] = useState('')
+  const [signUpEmail, setSignUpEmail] = useState('')
+  const [signUpPassword, setSignUpPassword] = useState('')
 
-      console.log(response);
-      if (!response.result) {
-        setErrorMessage(
-          "Oups ! Cet utilisateur existe déjà ou l'un des champs est vide 😟"
-        );
-      } else {
-        setIsLogin(true);
-      }
-    };
-    signUpDataBase();
-  };
+  const [signInEmail, setSignInEmail] = useState('')
+  const [signInPassword, setSignInPassword] = useState('')
 
-  const handleSubmitSignIn = (props) => {
-    const checkDB = async () => {
-      let rawResponse = await fetch("/sign-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `emailFromFront=${signInEmail}&passwordFromFront=${signInPassword}`,
-      });
-      let response = await rawResponse.json();
-      // console.log(response);
-      if (!response.result) {
-        setErrorMessageSignin("L'email ou le password n'existe pas !😤");
-      } else {
-        setIsLogin(true);
-      }
-    };
-    checkDB();
-  };
+  const [userExists, setUserExists] = useState(false)
 
-  useEffect(() => {
-    // console.log(isLogin);
-  }, [isLogin]);
+  const [listErrorsSignin, setErrorsSignin] = useState([])
+  const [listErrorsSignup, setErrorsSignup] = useState([])
+
+  var handleSubmitSignup = async () => {
+    
+    const data = await fetch('/sign-up', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `usernameFromFront=${signUpUsername}&emailFromFront=${signUpEmail}&passwordFromFront=${signUpPassword}`
+    })
+
+    const body = await data.json()
+
+    if(body.result == true){
+      setUserExists(true)
+    } else {
+      setErrorsSignup(body.error)
+    }
+  }
+
+  var handleSubmitSignin = async () => {
+ 
+    const data = await fetch('/sign-in', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `emailFromFront=${signInEmail}&passwordFromFront=${signInPassword}`
+    })
+
+    const body = await data.json()
+
+    if(body.result == true){
+      setUserExists(true)
+    }  else {
+      setErrorsSignin(body.error)
+    }
+  }
+
+  if(userExists){
+    return <Redirect to='/screensource' />
+  }
+
+  var tabErrorsSignin = listErrorsSignin.map((error,i) => {
+    return(<p>{error}</p>)
+  })
+
+  var tabErrorsSignup = listErrorsSignup.map((error,i) => {
+    return(<p>{error}</p>)
+  })
+
+  
 
   return (
-    <div className="header">
-      <div className="titre">
-        <h1>Morning News </h1>
+    <div className="Login-page" >
+
+          {/* SIGN-IN */}
+
+          <div className="Sign">
+                  
+            <Input onChange={(e) => setSignInEmail(e.target.value)} className="Login-input" placeholder="email" />
+
+            <Input.Password onChange={(e) => setSignInPassword(e.target.value)} className="Login-input" placeholder="password" />
+            
+            {tabErrorsSignin}
+
+            <Button onClick={() => handleSubmitSignin()}  style={{width:'80px'}} type="primary">Sign-in</Button>
+
+          </div>
+
+          {/* SIGN-UP */}
+
+          <div className="Sign">
+                  
+            <Input onChange={(e) => setSignUpUsername(e.target.value)} className="Login-input" placeholder="username" />
+
+            <Input onChange={(e) => setSignUpEmail(e.target.value)} className="Login-input" placeholder="email" />
+
+            <Input.Password onChange={(e) => setSignUpPassword(e.target.value)} className="Login-input" placeholder="password" />
+      
+            {tabErrorsSignup}
+
+            <Button onClick={() => handleSubmitSignup()} style={{width:'80px'}} type="primary">Sign-up</Button>
+
+          </div>
+
       </div>
-      <div className="Login-page">
-        {isLogin ? <Redirect to="/screensource" /> : null}
-
-        {/* SIGN-IN */}
-
-        <div className="Sign">
-          <Input
-            className="Login-input"
-            placeholder="arthur@lacapsule.com"
-            required
-            onChange={(e) => setSignInEmail(e.target.value)}
-            value={signInEmail}
-          />
-
-          <Input.Password
-            className="Login-input"
-            placeholder="password"
-            required
-            onChange={(e) => setSignInPassword(e.target.value)}
-            value={signInPassword}
-          />
-
-          <h5 className="error-message">{errorMessageSignin}</h5>
-          <Button
-            href=""
-            style={{ width: "80px" }}
-            onClick={(e) => {
-              e.preventDefault();
-              handleSubmitSignIn(props);
-            }}
-          >
-            Sign-In
-          </Button>
-        </div>
-
-        {/* SIGN-UP */}
-
-        <div className="Sign">
-          <Input
-            className="Login-input"
-            placeholder="User"
-            required
-            onChange={(e) => {
-              setSignUpUserName(e.target.value);
-              setErrorMessage("");
-            }}
-            value={signUpUserName}
-          />
-
-          <Input
-            className="Login-input"
-            placeholder="arthur@lacapsule.com"
-            required
-            onChange={(e) => {
-              setSignUpEmail(e.target.value);
-              setErrorMessage("");
-            }}
-            value={signUpEmail}
-          />
-
-          <Input.Password
-            className="Login-input"
-            placeholder="password"
-            required
-            onChange={(e) => {
-              setSignUpPassword(e.target.value);
-              setErrorMessage("");
-            }}
-            value={signUpPassword}
-          />
-          <h5 className="error-message">{errorMessage}</h5>
-          <Button
-            href=""
-            style={{ width: "80px" }}
-            onClick={(e) => {
-              e.preventDefault();
-              handleSubmitSignUp(props);
-            }}
-          >
-            Sign-up
-          </Button>
-        </div>
-      </div>
-    </div>
   );
 }
 
